@@ -14,8 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  terraform:
-    name: Terraform Plan
+  terraform-plan:
+    name: Terraform Plan (dev)
     runs-on: ubuntu-latest
 
     steps:
@@ -33,24 +33,28 @@ jobs:
         with:
           terraform_version: 1.14.3
 
-      - name: Terraform Init
+      - name: Terraform Init (dev)
+        working-directory: environments/dev
         run: terraform init
 
-      - name: Terraform Format Check
+      - name: Terraform Format Check (dev)
+        working-directory: environments/dev
         run: terraform fmt -check
 
-      - name: Terraform Validate
+      - name: Terraform Validate (dev)
+        working-directory: environments/dev
         run: terraform validate
 
-      - name: Terraform Plan
+      - name: Terraform Plan (dev)
+        working-directory: environments/dev
         run: terraform plan
 
   terraform-apply:
-    name: Terraform Apply
+    name: Terraform Apply (prod)
     runs-on: ubuntu-latest
-    needs: terraform
-    environment: prod
+    needs: terraform-plan
     if: github.event_name == 'workflow_dispatch'
+    environment: prod
 
     steps:
       - name: Checkout repository
@@ -67,10 +71,10 @@ jobs:
         with:
           terraform_version: 1.14.3
 
-      - name: Terraform Init
+      - name: Terraform Init (prod)
         working-directory: environments/prod
         run: terraform init
 
-      - name: Terraform Apply
+      - name: Terraform Apply (prod)
         working-directory: environments/prod
         run: terraform apply -auto-approve
