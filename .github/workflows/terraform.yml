@@ -2,28 +2,23 @@ name: Terraform CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [ main ]
   pull_request:
-    branches: ["main"]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
 
-# Prevent concurrent Terraform runs per branch
 concurrency:
-  group: terraform-${{ github.ref }}
+  group: terraform-dev
   cancel-in-progress: true
 
 jobs:
   terraform-plan-dev:
     name: Terraform Plan (dev)
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: environments/dev
 
     steps:
       - name: Checkout repository
@@ -41,17 +36,24 @@ jobs:
           terraform_version: 1.14.3
 
       - name: Terraform Init
-        run: terraform init -input=false
+        working-directory: environments/dev
+        run: terraform init
 
       - name: Terraform Format Check
+        working-directory: environments/dev
         run: terraform fmt -check
 
       - name: Terraform Validate
+        working-directory: environments/dev
         run: terraform validate
 
-      - name: Terraform Plan
-        run: terraform plan -input=false -no-color
-
+      - name: Terraform Plan (dev)
+        working-directory: environments/dev
+        run: |
+          terraform plan \
+            -input=false \
+            -var="aws_region=us-east-2" \
+            -var="environment=dev"
 
   terraform-apply-prod:
     name: Terraform Apply (prod)
@@ -60,10 +62,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     environment: prod
 
-    defaults:
-      run:
-        working-directory: environments/prod
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -80,7 +78,13 @@ jobs:
           terraform_version: 1.14.3
 
       - name: Terraform Init
-        run: terraform init -input=false
+        working-directory: environments/prod
+        run: terraform init
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve -input=false
+      - name: Terraform Apply (prod)
+        working-directory: environments/prod
+        run: |
+          terraform apply \
+            -auto-approve \
+            -var="aws_region=us-east-2" \
+            -var="environment=prod"
