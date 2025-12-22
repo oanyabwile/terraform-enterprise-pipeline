@@ -16,6 +16,10 @@ jobs:
     name: Terraform Plan (dev)
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: environments/dev
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,29 +35,29 @@ jobs:
         with:
           terraform_version: 1.14.3
 
-      - name: Terraform Init (dev)
-        working-directory: environments/dev
+      - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Terraform Format Check (dev)
-        working-directory: environments/dev
+      - name: Terraform Format Check
         run: terraform fmt -check
 
-      - name: Terraform Validate (dev)
-        working-directory: environments/dev
+      - name: Terraform Validate
         run: terraform validate
 
-      - name: Terraform Plan (dev)
-        working-directory: environments/dev
-        run: terraform plan -input=false -no-color
+      - name: Terraform Plan
+        run: terraform plan -input=false
 
 
   terraform-apply-prod:
     name: Terraform Apply (prod)
     runs-on: ubuntu-latest
     needs: terraform-plan-dev
-    environment: prod
     if: github.event_name == 'workflow_dispatch'
+    environment: prod
+
+    defaults:
+      run:
+        working-directory: environments/prod
 
     steps:
       - name: Checkout repository
@@ -70,10 +74,8 @@ jobs:
         with:
           terraform_version: 1.14.3
 
-      - name: Terraform Init (prod)
-        working-directory: environments/prod
+      - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Terraform Apply (prod)
-        working-directory: environments/prod
+      - name: Terraform Apply
         run: terraform apply -auto-approve -input=false
