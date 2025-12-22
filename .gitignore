@@ -20,3 +20,8 @@ override.tf.json
 # OS / Editor
 .DS_Store
 .vscode/
+
+
+# Local AWS CLI artifacts
+aws/
+awscliv2.zip
