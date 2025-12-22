@@ -1,4 +1,4 @@
-name: Terraform CI
+name: Terraform CI (OIDC Bootstrap Validation)
 
 on:
   push:
@@ -12,12 +12,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: terraform-dev
+  group: terraform-ci
   cancel-in-progress: true
 
 jobs:
-  terraform-plan-dev:
-    name: Terraform Plan (dev)
+  terraform-plan:
+    name: Terraform Plan (CI Validation)
     runs-on: ubuntu-latest
 
     steps:
@@ -35,57 +35,18 @@ jobs:
         with:
           terraform_version: 1.14.3
 
-      - name: Terraform Init (dev)
-        working-directory: environments/dev
+      - name: Terraform Init (bootstrap)
+        working-directory: infra/oidc
         run: terraform init
 
-      - name: Terraform Format Check (dev)
-        working-directory: environments/dev
+      - name: Terraform Format Check
+        working-directory: infra/oidc
         run: terraform fmt -check
 
-      - name: Terraform Validate (dev)
-        working-directory: environments/dev
+      - name: Terraform Validate
+        working-directory: infra/oidc
         run: terraform validate
 
-      - name: Terraform Plan (dev)
-        working-directory: environments/dev
-        run: |
-          terraform plan \
-            -input=false \
-            -var="aws_region=us-east-2" \
-            -var="environment=dev"
-
-  terraform-apply-prod:
-    name: Terraform Apply (prod)
-    runs-on: ubuntu-latest
-    needs: terraform-plan-dev
-    if: github.event_name == 'workflow_dispatch'
-    environment: prod
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::277089531535:role/github-actions-terraform
-          aws-region: us-east-2
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.14.3
-
-      - name: Terraform Init (prod)
-        working-directory: environments/prod
-        run: terraform init
-
-      - name: Terraform Apply (prod)
-        working-directory: environments/prod
-        run: |
-          terraform apply \
-            -auto-approve \
-            -input=false \
-            -var="aws_region=us-east-2" \
-            -var="environment=prod"
+      - name: Terraform Plan (read-only)
+        working-directory: infra/oidc
+        run: terraform plan -input=false
