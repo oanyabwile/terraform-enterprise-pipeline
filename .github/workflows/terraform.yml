@@ -2,14 +2,19 @@ name: Terraform CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
+
+# Prevent concurrent Terraform runs per branch
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   terraform-plan-dev:
@@ -45,7 +50,7 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -input=false
+        run: terraform plan -input=false -no-color
 
 
   terraform-apply-prod:
