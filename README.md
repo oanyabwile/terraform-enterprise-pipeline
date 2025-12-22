@@ -2,46 +2,53 @@
 
 ## Overview
 
-This repository demonstrates a **secure, enterprise-grade Terraform CI/CD pipeline** using **GitHub Actions** and **AWS OIDC authentication**, eliminating the need for long-lived AWS access keys.
+This repository demonstrates a **secure, enterprise-grade Terraform CI/CD pipeline**
+using **GitHub Actions** and **AWS OIDC authentication**, eliminating the need for
+long-lived AWS access keys.
 
-The project intentionally focuses on **CI/CD security, identity, and workflow design**, not application infrastructure. Real infrastructure (VPCs, EC2, RDS, etc.) would be deployed in downstream repositories using this same pipeline pattern.
+The project intentionally focuses on **CI/CD security, identity, and workflow design** —
+not application infrastructure. Real infrastructure (VPCs, EC2, RDS, EKS, etc.) would be
+deployed in downstream repositories that reuse this same CI/CD pattern.
+
+This mirrors how enterprise platform teams design reusable, security-first pipelines.
 
 ---
 
 ## Architecture Summary
 
-**Core components:**
+### Core components
 
-- GitHub Actions – CI/CD runner
-- Terraform – Infrastructure as Code
-- AWS IAM OIDC Provider – Federated authentication
-- AWS IAM Role & Policy – Least-privilege execution role
-- Remote Terraform State – S3 backend with DynamoDB locking
+- **GitHub Actions** – CI/CD runner
+- **Terraform** – Infrastructure as Code
+- **AWS IAM OIDC Provider** – Federated authentication
+- **AWS IAM Role & Policy** – Least-privilege execution role
+- **Remote Terraform State** – S3 backend with DynamoDB locking
 
-**High-level flow:**
+### High-level flow
 
-1. GitHub Actions workflow runs
+1. GitHub Actions workflow starts
 2. GitHub issues an OIDC token at runtime
 3. AWS STS validates the token
 4. GitHub Actions assumes an IAM role **without static credentials**
-5. Terraform executes using temporary credentials
+5. Terraform executes using short-lived AWS credentials
 
 ---
 
 ## Why OIDC (No Static AWS Keys)
 
-This pipeline uses **OIDC-based authentication** instead of AWS access keys to follow modern cloud security best practices:
+This pipeline uses **OIDC-based authentication** instead of AWS access keys to follow
+modern cloud security best practices:
 
 - No credentials stored in GitHub secrets
-- No key rotation required
+- No manual key rotation
 - Short-lived, automatically scoped credentials
 - Reduced blast radius if CI is compromised
 
-This mirrors how **enterprise AWS environments** secure CI/CD pipelines.
+This reflects how **enterprise AWS environments** secure CI/CD pipelines today.
 
 ---
 
-## Terraform CI/CD Workflow
+## Terraform CI Workflow (CI-Only by Design)
 
 ### Continuous Integration (CI)
 
@@ -49,34 +56,39 @@ Triggered on:
 
 - `push` to `main`
 - `pull_request` to `main`
+- manual `workflow_dispatch`
 
-CI performs:
+CI performs **read-only validation**:
 
 - `terraform init`
 - `terraform fmt -check`
 - `terraform validate`
 - `terraform plan`
 
-Purpose:
+### Purpose
 
 - Catch formatting, syntax, and logic issues early
-- Ensure infrastructure changes are reviewed before apply
-- Prevent broken Terraform from reaching production
+- Validate Terraform execution using OIDC-based credentials
+- Ensure infrastructure changes are reviewed before any apply stage
+- Prove secure identity federation between GitHub Actions and AWS
 
 ---
 
-### Controlled Apply (Manual Approval)
+## Apply Strategy (Intentionally Out of Scope)
 
-- Terraform **apply is not automatic**
-- Apply is triggered **only via `workflow_dispatch`**
-- Production apply is gated behind a **GitHub Environment**
-- Environment approval can require manual reviewers
+This repository **does not perform `terraform apply`**.
 
-This prevents:
+Its purpose is to validate:
 
-- Accidental production changes
-- Unreviewed destructive actions
-- CI pipelines from auto-applying infrastructure changes
+- GitHub Actions → AWS OIDC authentication
+- Secure Terraform execution in CI
+- Workflow structure suitable for enterprise environments
+
+Production applies, environment gating, and approval workflows are expected to exist in
+**downstream infrastructure repositories** that consume this CI/CD pattern.
+
+This separation mirrors real-world platform engineering practices, where CI/CD pipelines
+are centralized and reused across multiple infrastructure projects.
 
 ---
 
@@ -85,10 +97,10 @@ This prevents:
 ```text
 .
 ├── .github/workflows/
-│   └── terraform.yml        # GitHub Actions CI/CD pipeline
+│   └── terraform.yml        # GitHub Actions CI workflow (OIDC-based)
 │
 ├── infra/
-│   └── oidc/                # OIDC + IAM role configuration
+│   └── oidc/                # AWS OIDC + IAM role configuration
 │       ├── github-oidc-provider.tf
 │       ├── github-actions-role.tf
 │       ├── github-actions-policy.tf
