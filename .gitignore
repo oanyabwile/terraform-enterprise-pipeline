@@ -1,0 +1,22 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.crash.log
+
+# Terraform variables
+*.tfvars
+*.tfvars.json
+
+# Local overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Environment files
+.env
+
+# OS / Editor
+.DS_Store
+.vscode/
