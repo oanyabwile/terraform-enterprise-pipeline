@@ -25,3 +25,4 @@ override.tf.json
 # Local AWS CLI artifacts
 aws/
 awscliv2.zip
+.terraform.lock.hcl
