@@ -18,7 +18,7 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:sub" = [
               "repo:oanyabwile/terraform-enterprise-pipeline:ref:refs/heads/main",
               "repo:oanyabwile/terraform-enterprise-pipeline:environment:prod",
-              "repo:oanyabwile/terraform-aws-core-infra:*"
+              "repo:oanyabwile/terraform-aws-core-infra:ref:refs/heads/main"
 
             ]
           }
