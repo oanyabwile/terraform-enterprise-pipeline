@@ -18,7 +18,10 @@ resource "aws_iam_policy" "terraform_pipeline" {
           "logs:*",
           "cloudwatch:*",
           "ssm:*",
-          "kms:*"
+          "kms:*",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:ListSecrets"
         ]
         Resource = "*"
       }
